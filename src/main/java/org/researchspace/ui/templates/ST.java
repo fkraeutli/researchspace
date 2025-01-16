@@ -30,6 +30,7 @@ import org.researchspace.services.storage.api.ObjectKind;
 import org.researchspace.services.storage.api.PlatformStorage;
 import org.researchspace.services.storage.api.StoragePath;
 import org.researchspace.templates.FromStorageLoader;
+import org.researchspace.templates.HbsContext;
 
 import com.google.common.collect.Maps;
 import com.github.jknack.handlebars.Handlebars;
@@ -72,20 +73,26 @@ public class ST {
         public static final String LOGIN_PAGE = "login";
         public static final String HTML_HEAD = "html-head";
         public static final String NO_PERMISSIONS_PAGE = "no-permissions-page";
+        public static final String SIDEBAR = "sidebar";
     }
 
     public static StoragePath objectIdForTemplate(String name) {
         return TEMPLATE_OBJECT_PREFIX.resolve(name).addExtension(".hbs");
     }
 
-    public String renderPageLayoutTemplate(String path) throws IOException {
-        return renderPageLayoutTemplate(path, getDefaultPageLayoutTemplateParams());
+    public String renderPageLayoutTemplate(String path, String preferredLanguage) throws IOException {
+        HbsContext context = new HbsContext(preferredLanguage, config.getUiConfig().getDeploymentTitle());
+        return renderPageLayoutTemplate(path, context);
     }
 
     public Map<String, Object> getDefaultPageLayoutTemplateParams() {
         Map<String, Object> params = Maps.newHashMap();
         params.put("deploymentTitle", config.getUiConfig().getDeploymentTitle());
         return params;
+    }
+
+    public String getDefaultPreferredLanguage() {
+        return config.getUiConfig().getPreferredLanguages().get(0);
     }
 
     /**
@@ -99,6 +106,9 @@ public class ST {
      * will automatically inject some configuration parameters as params.
      */
     public String renderPageLayoutTemplate(String path, Object params) throws IOException {
+        if (params instanceof HbsContext) {
+            return handlebars.compile(path).apply((HbsContext) params);
+        }
         return handlebars.compile(path).apply(params);
     }
 }
